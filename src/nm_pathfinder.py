@@ -20,9 +20,9 @@ def find_path (source_point, destination_point, mesh):
     boxes = []
 
     for box in mesh["boxes"]:
-        if box[0] < source_point[0] < box[1] and box[2] < source_point[1] < box[3]:
+        if box[0] <= source_point[0] < box[1] and box[2] <= source_point[1] < box[3]:
             boxes.append(box)
-        if box[0] < destination_point[0] < box[1] and box[2] < destination_point[1] < box[3]:
+        if box[0] <= destination_point[0] < box[1] and box[2] <= destination_point[1] < box[3]:
             boxes.append(box)
     
     if len(boxes) != 2:
