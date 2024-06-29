@@ -42,8 +42,8 @@ def redraw():
     canvas.create_image((0,0), anchor=tkinter.NW, image=small_image)
 
     for box in visited_boxes:
-        x1,x2,y1,y2 = shrink(box)
-        canvas.create_rectangle(y1,x1,y2,x2,outline='pink')
+        y1,y2,x1,x2 = shrink(box)
+        canvas.create_rectangle(x1,y1,x2,y2,outline='pink')
 
     for i in range(len(path) - 1):
         x1, y1 = shrink(path[i])

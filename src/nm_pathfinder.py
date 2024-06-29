@@ -19,23 +19,27 @@ def find_path (source_point, destination_point, mesh):
     path = []
     boxes = []
 
+    print(source_point)
+    print(destination_point)
+
     for box in mesh["boxes"]:
         if box[0] <= source_point[0] < box[1] and box[2] <= source_point[1] < box[3]:
             boxes.append(box)
+            #print(boxes[-1])
         if box[0] <= destination_point[0] < box[1] and box[2] <= destination_point[1] < box[3]:
             boxes.append(box)
     
     if len(boxes) != 2:
         print("No path!")
-    elif boxes[0] == boxes[1]:
+    elif boxes[0] == boxes[1]:  #if start and end are in the same box then create a line between them.
         path.append(source_point)
         path.append(destination_point)
     else:
-        boxes = simple_search(boxes[0], boxes[1], mesh)
-
+        path, boxes = simple_search(boxes[0], boxes[1], mesh,source_point,destination_point,boxes)
+    print(path)
     return path, boxes
 
-def simple_search(source_box, dest_box, mesh):
+def simple_search(source_box, dest_box, mesh,source_point,destination_point,boxes):
     path = []
     found = False
 
@@ -44,7 +48,7 @@ def simple_search(source_box, dest_box, mesh):
     came_from = dict()
     came_from[source_box] = None
 
-    while not frontier.empty():
+    while not frontier.empty():     #BFS
         current_box = frontier.get()
         if current_box == dest_box:
             found = True
@@ -59,8 +63,37 @@ def simple_search(source_box, dest_box, mesh):
         return []
     else:
         current_box = dest_box
+        path.append(destination_point)
         while current_box != source_box:
-            path.append(current_box)
-            current_box = came_from[current_box]
-        path.append(source_box)
-        return path
+            print(current_box)
+            print(source_box)
+            #Save boxes as coordinates
+            b1y1,b1y2,b1x1,b1x2 = current_box[0],current_box[1],current_box[2],current_box[3]
+            b2y1,b2y2,b2x1,b2x2 = source_box[0],source_box[1],source_box[2],source_box[3]
+            #find range in the boxes
+            xRange = [max(b1x1,b2x1),min(b1x2,b2x2)]
+            yRange = [min(b1y1,b2y1),max(b1y2,b2y2)]
+            print(xRange)
+            print(yRange)
+            #find y location:
+            if path[-1][0] < min(yRange):
+                 tempY = min(yRange)
+            elif path[-1][0] > max(yRange):
+                tempY = max(yRange)
+            else: tempY = path[-1][0]   #May need a better way to do this part
+            #find x location
+            if path[-1][1] < min(xRange):
+                tempX = min(xRange)
+            elif path[-1][1] > max(xRange):
+                tempX = max(xRange)
+            else: tempX = path[-1][1]   #same as above
+
+
+            #put it in path
+            tempPath = tempY,tempX  #save the path with the values
+            print(tempPath)
+            boxes.append(current_box)   #push the box we just visited so it appears on the visual
+            path.append(tempPath)       #push the path we just saved
+            current_box = came_from[current_box]    #traverse to next box (broken i think)
+        path.append(source_point)
+        return path, boxes
