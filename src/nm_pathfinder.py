@@ -21,16 +21,13 @@ def find_path (source_point, destination_point, mesh):
     path = []
     boxes = []
 
-    print(source_point)
-    print(destination_point)
-
     for box in mesh["boxes"]:
         if box[0] <= source_point[0] < box[1] and box[2] <= source_point[1] < box[3]:
             boxes.append(box)
-            source_box = box
+            source_box = box    #used to call simple_search
         if box[0] <= destination_point[0] < box[1] and box[2] <= destination_point[1] < box[3]:
             boxes.append(box)
-            dest_box = box
+            dest_box = box      
     
     if len(boxes) != 2:
         print("No path!")
