@@ -52,7 +52,7 @@ def redraw():
 
     if source_point:
         x,y = shrink(source_point)
-        canvas.create_oval(y-5,x-5,y+5,x+5,width=2,outline='red')
+        canvas.create_oval(y-5,x-5,y+5,x+5,width=2,outline='green')
 
     if destination_point:
         x,y = shrink(destination_point)
