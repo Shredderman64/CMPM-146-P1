@@ -1,4 +1,6 @@
-from queue import Queue
+from heapq import heappop, heappush
+from math import sqrt
+#from queue import Queue
 
 def find_path (source_point, destination_point, mesh):
 
@@ -36,32 +38,40 @@ def find_path (source_point, destination_point, mesh):
         path.append(source_point)
         path.append(destination_point)
     else:
-        path, boxes = simple_search(source_box, dest_box, mesh,source_point,destination_point,boxes)
-    print(path)
+        path, boxes = navmesh_search(source_box, dest_box, mesh,source_point,destination_point,boxes)
+    # print(path)
     return path, boxes
 
-def simple_search(source_box, dest_box, mesh,source_point,destination_point,boxes):
+def navmesh_search(source_box, dest_box, mesh,source_point,destination_point,boxes):
     path = []
     found = False
 
-    frontier = Queue()
-    frontier.put(source_box)
+    frontier = []
+    heappush(frontier, (0, source_box))
     came_from = dict()
     came_from[source_box] = None
+    pathcosts = dict()
+    pathcosts[source_box] = 0
+    detail_points = dict()
+    detail_points[source_box] = source_point
+    detail_points[dest_box] = dest_box
 
-    while not frontier.empty():     #BFS
-        current_box = frontier.get()
+    while frontier:     #BFS
+        priority, current_box = heappop(frontier)
         if current_box == dest_box:
             found = True
             break
         for next in mesh["adj"][current_box]:
-            if next not in came_from:
-                frontier.put(next)
+            distance, detail_point = calculate_distance(current_box, next, detail_points)
+            #detail_points[next] = detail_point
+            new_cost = priority + distance
+            if next not in pathcosts or new_cost < pathcosts[next]:
+                pathcosts[next] = new_cost
                 came_from[next] = current_box
-                boxes.append(next)   #push the box we just visited so it appears on the visual. #delete if you want less boxes on screen
+                detail_points[next] = detail_point
+                heappush(frontier, (new_cost, next))
+                #boxes.append(next)   #push the box we just visited so it appears on the visual. delete if you want less boxes on screen
         
-
-
     if not found:
         print("No path!")
         return []
@@ -70,35 +80,43 @@ def simple_search(source_box, dest_box, mesh,source_point,destination_point,boxe
         path.append(destination_point)      #set the start position of the line to the end position.
         while current_box != source_box:    #We end once we find last box.
             next_box = came_from[current_box]      #set a temporary copy of the box we are traveling to.
-            print(current_box)
-            print(source_box)
-            #Save boxes as coordinates
-            b1y1,b1y2,b1x1,b1x2 = current_box[0],current_box[1],current_box[2],current_box[3]   
-            b2y1,b2y2,b2x1,b2x2 = next_box[0],next_box[1],next_box[2],next_box[3]
-            #find range in the boxes
-            xRange = [max(b1x1,b2x1),min(b1x2,b2x2)]    
-            yRange = [max(b1y1,b2y1),min(b1y2,b2y2)]
-            print(xRange)
-            print(yRange)
-            #find y location:
-            if path[-1][0] < min(yRange):
-                 tempY = min(yRange)
-            elif path[-1][0] > max(yRange):
-                tempY = max(yRange)
-            else: tempY = path[-1][0]   #May need a better way to do this part
-            #find x location
-            if path[-1][1] < min(xRange):
-                tempX = min(xRange)
-            elif path[-1][1] > max(xRange):
-                tempX = max(xRange)
-            else: tempX = path[-1][1]   #same as above
-
-
-            #put it in path
-            tempPath = tempY,tempX  #save the path with the values
-            print(tempPath)
-            #boxes.append(current_box)  Uncomment this line for a cleaner amount of boxes ;)
-            path.append(tempPath)       #push the path we just saved
+            print(detail_points[next_box])
+            path.append(detail_points[current_box])
+            # print(tempPath)
+            boxes.append(current_box)  #Uncomment this line for a cleaner amount of boxes ;)
+            #path.append(tempPath)       #push the path we just saved
             current_box = came_from[current_box]    #traverse to next box (broken i think)
         path.append(source_point)
         return path, boxes
+    
+def calculate_distance(current_box, next_box, detail_points):
+    #Save boxes as coordinates
+    b1y1,b1y2,b1x1,b1x2 = current_box[0],current_box[1],current_box[2],current_box[3]   
+    b2y1,b2y2,b2x1,b2x2 = next_box[0],next_box[1],next_box[2],next_box[3]
+    #find range in the boxes
+    xRange = [max(b1x1,b2x1),min(b1x2,b2x2)]
+    yRange = [max(b1y1,b2y1),min(b1y2,b2y2)]
+    
+    sourceY,sourceX = detail_points[current_box]
+
+    #find y location
+    if sourceY < min(yRange):
+        tempY = min(yRange)
+    elif sourceY > max(yRange):
+        tempY = max(yRange)
+    else: tempY = sourceY
+    #find x location
+    if sourceX < min(xRange):
+        tempX = min(xRange)
+    elif sourceX > max(xRange):
+        tempX = max(xRange)
+    else: tempX = sourceX   #same as above
+
+    detail_point = tempY,tempX
+
+    # calculate distance between them
+    distance = sqrt((tempX - sourceX)**2 + (tempY - sourceY)**2)
+    return distance, detail_point
+
+def calculate_path(current_box, next_box):
+    return
