@@ -1,6 +1,5 @@
 from heapq import heappop, heappush
 from math import sqrt
-#from queue import Queue
 
 def find_path (source_point, destination_point, mesh):
 
@@ -45,29 +44,30 @@ def navmesh_search(source_box, dest_box, mesh,source_point,destination_point,box
 
     frontier = []
     heappush(frontier, (0, source_box))
-    came_from = dict()
-    came_from[source_box] = None
+
+    child_of = dict()
+    child_of[source_box] = None
     pathcosts = dict()
     pathcosts[source_box] = 0
     detail_points = dict()
     detail_points[source_box] = source_point
-    detail_points[dest_box] = dest_box
 
     while frontier:     #BFS
-        priority, current_box = heappop(frontier)
+        queued, current_box = heappop(frontier)
         if current_box == dest_box:
             found = True
             break
         for next in mesh["adj"][current_box]:
             distance, detail_point = calculate_distance(current_box, next, detail_points)
             #detail_points[next] = detail_point
-            new_cost = priority + distance
+            new_cost = pathcosts[current_box] + distance
             if next not in pathcosts or new_cost < pathcosts[next]:
                 pathcosts[next] = new_cost
-                came_from[next] = current_box
+                child_of[next] = current_box
                 detail_points[next] = detail_point
-                heappush(frontier, (new_cost, next))
-                #boxes.append(next)   #push the box we just visited so it appears on the visual. delete if you want less boxes on screen
+                priority = new_cost + heuristic(destination_point, detail_point)
+                heappush(frontier, (priority, next))
+                boxes.append(next)   #push the box we just visited so it appears on the visual. delete if you want less boxes on screen
         
     if not found:
         print("No path!")
@@ -76,13 +76,13 @@ def navmesh_search(source_box, dest_box, mesh,source_point,destination_point,box
         current_box = dest_box              #Set iterator to the destination box, we will work backwards
         path.append(destination_point)      #set the start position of the line to the end position.
         while current_box != source_box:    #We end once we find last box.
-            next_box = came_from[current_box]      #set a temporary copy of the box we are traveling to.
+            next_box = child_of[current_box]      #set a temporary copy of the box we are traveling to.
             print(detail_points[next_box])
             path.append(detail_points[current_box])
             # print(tempPath)
-            boxes.append(current_box)  #Uncomment this line for a cleaner amount of boxes ;)
+            #boxes.append(current_box)  #Uncomment this line for a cleaner amount of boxes ;)
             #path.append(tempPath)       #push the path we just saved
-            current_box = came_from[current_box]    #traverse to next box (broken i think)
+            current_box = child_of[current_box]    #traverse to next box (broken i think)
         path.append(source_point)
         return path, boxes
     
@@ -115,5 +115,6 @@ def calculate_distance(current_box, next_box, detail_points):
     distance = sqrt((tempX - sourceX)**2 + (tempY - sourceY)**2)
     return distance, detail_point
 
-def calculate_path(current_box, next_box):
-    return
+def heuristic(goal, next_point):
+    estimate = sqrt((goal[1] - next_point[1])**2 + (goal[0] - next_point[0])**2)
+    return estimate
