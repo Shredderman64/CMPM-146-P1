@@ -65,14 +65,12 @@ def navmesh_search(source_box, dest_box, mesh,source_point,destination_point,box
         queued, current_box, travelDirection = heappop(frontier)
         if (current_box != source_box and current_box != dest_box):
             if (pathcosts_back.get(current_box) is not None and pathcosts_forw.get(current_box) is not None):
-                print("CAN YOU SEE ME? END!! " + str(current_box))
                 found = True
                 final_box = current_box
                 break
         for next in mesh["adj"][current_box]:
             #detail_points_back[next] = detail_point
             if (travelDirection == True): 
-                print("CAN YOU SEE ME? BACK")
                 distance, detail_point = calculate_distance(current_box, next, detail_points_back)
                 new_cost = pathcosts_back[current_box] + distance
                 if next not in pathcosts_back or new_cost < pathcosts_back[next]:
@@ -83,7 +81,6 @@ def navmesh_search(source_box, dest_box, mesh,source_point,destination_point,box
                     heappush(frontier, (priority, next, True))
                     boxes.append(next)   #push the box we just visited so it appears on the visual. delete if you want less boxes on screen
             else: 
-                print("CAN YOU SEE ME? FORW")
                 distance, detail_point = calculate_distance(current_box, next, detail_points_forw)
                 new_cost = pathcosts_forw[current_box] + distance
                 if next not in pathcosts_forw or new_cost < pathcosts_forw[next]:
@@ -101,28 +98,19 @@ def navmesh_search(source_box, dest_box, mesh,source_point,destination_point,box
         print("No path!")
         return []
     else:
-        current_box = final_box              #Set iterator to the destination box, we will work backwards
-        #path.append(destination_point)      #set the start position of the line to the end position.
-        while current_box != source_box:    #We end once we find last box.
+        current_box = final_box              #Set iterator to the box both directions found
+        while current_box != source_box:     #We end once we find source box.
             next_box = back_prev[current_box]      #set a temporary copy of the box we are traveling to.
-            if detail_points_back.get(next_box) is not None:
-                print(detail_points_back[next_box])
-            path.append(detail_points_back[current_box])
-            # print(tempPath)
+            path.append(detail_points_back[current_box]) #add to the back of the list
             #boxes.append(current_box)  #Uncomment this line for a cleaner amount of boxes ;)
-            #path.append(tempPath)       #push the path we just saved
-            current_box = back_prev[current_box]    #traverse to next box (broken i think)
-        path.append(source_point)
+            current_box = back_prev[current_box]    #traverse to next box 
+        path.append(source_point)                   
         current_box = final_box
         while current_box != dest_box:    #We end once we find last box.
             next_box = forw_prev[current_box]      #set a temporary copy of the box we are traveling to.
-            if detail_points_forw.get(next_box) is not None:
-                print(detail_points_forw[next_box])
-            path.insert(0,detail_points_forw[current_box])
-            # print(tempPath)
+            path.insert(0,detail_points_forw[current_box])      #add to the front of the list
             #boxes.append(current_box)  #Uncomment this line for a cleaner amount of boxes ;)
-            #path.append(tempPath)       #push the path we just saved
-            current_box = next_box    #traverse to next box (broken i think)
+            current_box = next_box    #traverse to next box 
         path.insert(0,destination_point)
         return path, boxes
     
