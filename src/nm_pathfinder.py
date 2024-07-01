@@ -90,9 +90,6 @@ def navmesh_search(source_box, dest_box, mesh,source_point,destination_point,box
                     priority = new_cost + heuristic(source_point, detail_point)
                     heappush(frontier, (priority, next, False))
                     boxes.append(next)   #push the box we just visited so it appears on the visual. delete if you want less boxes on screen
-
-
-
         
     if not found:
         print("No path!")
