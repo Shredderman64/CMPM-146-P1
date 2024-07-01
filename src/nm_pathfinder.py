@@ -43,47 +43,87 @@ def navmesh_search(source_box, dest_box, mesh,source_point,destination_point,box
     found = False
 
     frontier = []
-    heappush(frontier, (0, source_box))
+    heappush(frontier, (0, dest_box, False))
+    heappush(frontier, (0, source_box, True))
 
-    child_of = dict()
-    child_of[source_box] = None
-    pathcosts = dict()
-    pathcosts[source_box] = 0
-    detail_points = dict()
-    detail_points[source_box] = source_point
+    back_prev = dict()
+    back_prev[source_box] = None
+    forw_prev = dict()
+    forw_prev[dest_box] = None
+    pathcosts_back = dict()
+    pathcosts_back[source_box] = 0
+    pathcosts_forw = dict()
+    pathcosts_forw[dest_box] = 0
+    detail_points_back = dict()
+    detail_points_back[source_box] = source_point
+    detail_points_forw = dict()
+    detail_points_forw[dest_box] = destination_point
 
-    while frontier:     #BFS
-        queued, current_box = heappop(frontier)
-        if current_box == dest_box:
-            found = True
-            break
+    final_box = source_box
+
+    while frontier:     
+        queued, current_box, travelDirection = heappop(frontier)
+        if (current_box != source_box and current_box != dest_box):
+            if (pathcosts_back.get(current_box) is not None and pathcosts_forw.get(current_box) is not None):
+                print("CAN YOU SEE ME? END!! " + str(current_box))
+                found = True
+                final_box = current_box
+                break
         for next in mesh["adj"][current_box]:
-            distance, detail_point = calculate_distance(current_box, next, detail_points)
-            #detail_points[next] = detail_point
-            new_cost = pathcosts[current_box] + distance
-            if next not in pathcosts or new_cost < pathcosts[next]:
-                pathcosts[next] = new_cost
-                child_of[next] = current_box
-                detail_points[next] = detail_point
-                priority = new_cost + heuristic(destination_point, detail_point)
-                heappush(frontier, (priority, next))
-                boxes.append(next)   #push the box we just visited so it appears on the visual. delete if you want less boxes on screen
+            #detail_points_back[next] = detail_point
+            if (travelDirection == True): 
+                print("CAN YOU SEE ME? BACK")
+                distance, detail_point = calculate_distance(current_box, next, detail_points_back)
+                new_cost = pathcosts_back[current_box] + distance
+                if next not in pathcosts_back or new_cost < pathcosts_back[next]:
+                    pathcosts_back[next] = new_cost
+                    back_prev[next] = current_box
+                    detail_points_back[next] = detail_point
+                    priority = new_cost + heuristic(destination_point, detail_point)
+                    heappush(frontier, (priority, next, True))
+                    boxes.append(next)   #push the box we just visited so it appears on the visual. delete if you want less boxes on screen
+            else: 
+                print("CAN YOU SEE ME? FORW")
+                distance, detail_point = calculate_distance(current_box, next, detail_points_forw)
+                new_cost = pathcosts_forw[current_box] + distance
+                if next not in pathcosts_forw or new_cost < pathcosts_forw[next]:
+                    pathcosts_forw[next] = new_cost
+                    forw_prev[next] = current_box
+                    detail_points_forw[next] = detail_point
+                    priority = new_cost + heuristic(source_point, detail_point)
+                    heappush(frontier, (priority, next, False))
+                    boxes.append(next)   #push the box we just visited so it appears on the visual. delete if you want less boxes on screen
+
+
+
         
     if not found:
         print("No path!")
         return []
     else:
-        current_box = dest_box              #Set iterator to the destination box, we will work backwards
-        path.append(destination_point)      #set the start position of the line to the end position.
+        current_box = final_box              #Set iterator to the destination box, we will work backwards
+        #path.append(destination_point)      #set the start position of the line to the end position.
         while current_box != source_box:    #We end once we find last box.
-            next_box = child_of[current_box]      #set a temporary copy of the box we are traveling to.
-            print(detail_points[next_box])
-            path.append(detail_points[current_box])
+            next_box = back_prev[current_box]      #set a temporary copy of the box we are traveling to.
+            if detail_points_back.get(next_box) is not None:
+                print(detail_points_back[next_box])
+            path.append(detail_points_back[current_box])
             # print(tempPath)
             #boxes.append(current_box)  #Uncomment this line for a cleaner amount of boxes ;)
             #path.append(tempPath)       #push the path we just saved
-            current_box = child_of[current_box]    #traverse to next box (broken i think)
+            current_box = back_prev[current_box]    #traverse to next box (broken i think)
         path.append(source_point)
+        current_box = final_box
+        while current_box != dest_box:    #We end once we find last box.
+            next_box = forw_prev[current_box]      #set a temporary copy of the box we are traveling to.
+            if detail_points_forw.get(next_box) is not None:
+                print(detail_points_forw[next_box])
+            path.insert(0,detail_points_forw[current_box])
+            # print(tempPath)
+            #boxes.append(current_box)  #Uncomment this line for a cleaner amount of boxes ;)
+            #path.append(tempPath)       #push the path we just saved
+            current_box = next_box    #traverse to next box (broken i think)
+        path.insert(0,destination_point)
         return path, boxes
     
 def calculate_distance(current_box, next_box, detail_points):
